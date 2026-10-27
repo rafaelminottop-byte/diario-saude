@@ -12,30 +12,42 @@ Organizador pessoal de saúde: medidas de pressão com gráfico, remédios, exam
 
 ## Como rodar
 
-### 1. Supabase
+### 1. No seu computador (fase atual, de graça)
 
-1. Crie um projeto em [supabase.com](https://supabase.com). Escolha a região **São Paulo (sa-east-1)**, para os dados ficarem no Brasil.
-2. **SQL Editor → New query**, cole o conteúdo de [`supabase/schema.sql`](supabase/schema.sql) e clique em **Run**.
-3. **Authentication → URL Configuration**:
-   - Site URL: `http://localhost:3000` (depois troque pela URL de produção)
-   - Redirect URLs: adicione `http://localhost:3000/auth/callback` e, depois do deploy, `https://SEU-DOMINIO/auth/callback`
-4. **Project Settings → API**: copie a `Project URL` e a chave `anon public`.
+Tudo roda localmente: o app, o banco e o login. Não precisa de conta na nuvem.
 
-### 2. Local
+**Instalar uma vez (Windows):**
+1. [Node.js LTS](https://nodejs.org) (versão 20 ou mais nova).
+2. [Docker Desktop](https://www.docker.com/products/docker-desktop/). Na instalação, deixe marcado **Use WSL 2**. Reinicie o PC se ele pedir.
+3. [Git](https://git-scm.com/download/win), ou o GitHub Desktop que você já usa, para baixar este repositório.
+
+**Primeira vez, no terminal, dentro da pasta do projeto:**
 
 ```bash
-cp .env.example .env.local   # preencha com os dados do passo 1.4
 npm install
-npm run dev                  # abre em http://localhost:3000
+npm run db:start      # sobe o Supabase local (a 1ª vez baixa ~2 GB e leva alguns minutos)
+npm run env:local     # cria o .env.local apontando para o banco local
+npm run dev           # abre o app em http://localhost:3000
 ```
 
-### 3. Deploy (Vercel)
+**Login local:** digite qualquer e-mail na tela de entrada. O e-mail não sai do seu computador: ele aparece em **http://localhost:54324** (Mailpit). Abra a mensagem e clique no link.
 
-1. Importe este repositório em [vercel.com/new](https://vercel.com/new).
-2. Cadastre as 3 variáveis do `.env.example`. `NEXT_PUBLIC_SITE_URL` é a URL final, por exemplo `https://diario-saude.vercel.app`.
-3. Adicione `https://SEU-DOMINIO/auth/callback` nas Redirect URLs do Supabase.
+**Dia a dia:** abra o Docker Desktop, depois rode `npm run db:start` e `npm run dev`. Para desligar: `Ctrl+C` no terminal e `npm run db:stop`. Os dados ficam guardados entre um uso e outro.
 
-### 4. Instalar como app
+**Painel do banco local:** http://localhost:54323 (Supabase Studio), para ver as tabelas.
+
+> `npm run db:reset` **apaga** o banco local e recria vazio. Só use se quiser começar do zero.
+
+### 2. Na nuvem (quando for para a internet)
+
+1. Crie um projeto em [supabase.com](https://supabase.com) na região **São Paulo (sa-east-1)**. Use um projeto **só para este app**, nunca o do Fit Padel.
+2. **SQL Editor → New query**, cole [`supabase/migrations/20261027000000_init.sql`](supabase/migrations/20261027000000_init.sql) e clique em **Run**.
+3. **Authentication → URL Configuration**: Site URL = URL de produção; Redirect URLs = `https://SEU-DOMINIO/auth/callback`.
+4. Importe o repositório em [vercel.com/new](https://vercel.com/new) e cadastre as 3 variáveis do `.env.example`, com a `Project URL` e a chave `anon public` de **Project Settings → API**.
+
+Para clientes pagantes, use o plano pago do Supabase: o gratuito pausa o projeto depois de cerca de uma semana sem acesso e não tem backup automático.
+
+### 3. Instalar como app
 
 - **Computador (Chrome/Edge):** abra o site e clique no ícone de instalar, na barra de endereço. O app ganha ícone na área de trabalho e abre em janela própria.
 - **Android:** menu ⋮ → *Instalar app*.
@@ -56,7 +68,10 @@ app/
     actions.ts      todas as gravações (Server Actions)
 components/         gráfico de pressão (SVG), navegação
 lib/                cliente Supabase, formatação
-supabase/schema.sql tabelas + RLS
+supabase/
+  migrations/       tabelas + RLS (aplicadas em ordem)
+  config.toml       Supabase local (portas, URLs de login)
+scripts/env-local.mjs  gera o .env.local do banco local
 middleware.ts       protege as rotas e renova a sessão
 ```
 

@@ -19,13 +19,14 @@ Nasceu de um protótipo no claude.ai (artefato "Diário de Saúde", https://clau
 
 ## Estado atual (out/2026)
 
-- Feito: login, consentimento, painel (resumo, gráfico de 90 dias, registro de medidas), remédios (suspender/retomar), exames (último vs. anterior), histórico, pendências, manifest + ícones PWA, `supabase/schema.sql` com RLS.
-- Testado: `next build` e `tsc` limpos; redirecionamento para `/login` e manifest respondendo. **Ainda não testado contra um Supabase real.**
-- Não feito: deploy. O Rafael precisa criar o projeto Supabase (região São Paulo), rodar `supabase/schema.sql`, configurar Auth → URL Configuration e importar o repo na Vercel. Ver README.
+- Feito: login, consentimento, painel (resumo, gráfico de 90 dias, registro de medidas), remédios (suspender/retomar), exames (último vs. anterior), histórico, pendências, manifest + ícones PWA, migração `supabase/migrations/20261027000000_init.sql` com RLS, Supabase local (`supabase/config.toml`, scripts `db:*` e `env:local`).
+- Testado: `next build` e `tsc` limpos; redirecionamento para `/login` e manifest respondendo. A migração foi aplicada duas vezes num Postgres 16 com stubs do schema `auth`: roda sem erro, o gatilho cria o perfil, e o RLS esconde as linhas de outro usuário e bloqueia gravação em nome dele. **Ainda não testado ponta a ponta com o Supabase local rodando (login por e-mail no Mailpit).**
+- **Fase atual: rodar só no computador do Rafael** (Windows, Supabase local via Docker Desktop), até o app ficar bom. O plano gratuito do Supabase na nuvem já está ocupado (inclusive pelo FIT PADEL SYSTEM, de produção). **Nunca** aplique este schema no projeto do Fit Padel: ele recria `handle_new_user` e o gatilho em `auth.users` e quebraria o cadastro do clube.
+- Não feito: deploy na nuvem. Ver README, seção 2.
 
 ## Próximos passos, em ordem
 
-1. Ajudar o Rafael a subir Supabase + Vercel e testar o fluxo completo de login com um e-mail real.
+1. Ajudar o Rafael a rodar localmente (README seção 1: Docker Desktop, `npm run db:start`, `npm run env:local`, `npm run dev`) e testar o login pelo Mailpit em http://localhost:54324. A nuvem (Supabase pago + Vercel) fica para quando o app estiver bom.
 2. Migrar os dados do artefato do claude.ai para o banco (remédios, histórico, exames, medidas, pendências), via script local que lê um export JSON. Nada de dados no git.
 3. Editar registros (hoje só dá para adicionar e apagar).
 4. Página "Resumo para a consulta": médias do período, trocas de remédio e exames recentes, pronta para imprimir.
@@ -38,7 +39,8 @@ Nasceu de um protótipo no claude.ai (artefato "Diário de Saúde", https://clau
 
 - Gravações só em `app/(app)/actions.ts` (Server Actions). Toda action chama `auth()` e confia no RLS, nunca em `user_id` vindo do formulário.
 - Leituras em Server Components com `getUser()` de `lib/supabase/server.ts`.
-- Mudança de schema: editar `supabase/schema.sql` de forma idempotente (`if not exists`, `drop policy if exists`) e dizer ao Rafael o SQL a rodar.
+- Mudança de schema: criar um novo arquivo em `supabase/migrations/` (`AAAAMMDDHHMMSS_descricao.sql`), nunca editar uma migração já aplicada. Localmente: `npx supabase migration up`. Escreva de forma idempotente e com RLS em toda tabela nova.
+- `supabase/config.toml` tem o seed desligado de propósito: nenhum dado pessoal vai para o git.
 - Cores só via tokens CSS em `app/globals.css`, com versão clara e escura.
 - Antes de commitar: `npm run build` e `npm run typecheck`.
 

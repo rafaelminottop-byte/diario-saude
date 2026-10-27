@@ -1,5 +1,5 @@
 -- Diário de Saúde — esquema inicial
--- Rode no Supabase: SQL Editor → New query → cole este arquivo → Run.
+-- Local: aplicado automaticamente por `npm run db:start`. Nuvem: SQL Editor → cole este arquivo → Run (ou `npx supabase db push`).
 -- Cada tabela tem Row Level Security: cada usuário só lê e escreve as próprias linhas.
 
 create extension if not exists pgcrypto;
